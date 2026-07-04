@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upgrade Paket — asistenku.pro</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .plan-scroll{display:flex;gap:12px;overflow-x:auto;padding:16px 0 6px}
+  .plan-card{flex:none;width:200px;border:1.5px solid var(--gray-200);border-radius:18px;padding:18px;position:relative}
+  .plan-card.best{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light)}
+  .plan-card .tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--orange);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px}
+  .plan-card h3{margin:6px 0 2px;font-size:13px;letter-spacing:.5px;color:var(--gray-500)}
+  .plan-card .price{font-size:22px;font-weight:800;color:var(--navy)}
+  .plan-card .price span{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .plan-card ul{list-style:none;padding:0;margin:14px 0;font-size:12px;color:var(--gray-700)}
+  .plan-card ul li{margin-bottom:8px;display:flex;gap:6px}
+  .compare-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .compare-table th, .compare-table td{padding:10px 6px;text-align:center;border-bottom:1px solid var(--gray-200)}
+  .compare-table th:first-child, .compare-table td:first-child{text-align:left}
+  .faq-item{border-bottom:1px solid var(--gray-200);padding:12px 0}
+  .faq-item b{font-size:13px;display:flex;justify-content:space-between}
+  .faq-item p{font-size:12px;color:var(--gray-500);margin:8px 0 0}
+  .pay-methods{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .pay-methods span{background:var(--gray-100);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="topbar-back">
+      <a class="icon-btn" href="dashboard.html">←</a>
+      <div>
+        <div class="page-title">Upgrade Paket</div>
+        <div class="page-sub">Pilih paket sesuai kebutuhanmu</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="plan-scroll">
+      <div class="plan-card" data-plan="gratis" data-harga="0">
+        <h3>GRATIS</h3>
+        <div class="price">Rp 0</div>
+        <ul>
+          <li>✓ 5 halaman/hari</li><li>✓ 5 Chat DoktrAI</li><li>✓ Semua menu utama</li><li>✓ Riwayat 7 hari</li>
+        </ul>
+        <button class="btn btn-outline btn-block btn-sm" disabled>Paket Aktif</button>
+      </div>
+      <div class="plan-card" data-plan="standar" data-harga="20000">
+        <h3>STANDAR</h3>
+        <div class="price">Rp 20.000<span>/bulan</span></div>
+        <ul>
+          <li>✓ 10 halaman/hari</li><li>✓ 20 Chat DoktrAI</li><li>✓ Riwayat tanpa batas</li><li>✓ Prioritas normal</li>
+        </ul>
+        <button class="btn btn-primary btn-block btn-sm" onclick="beliPaket('standar',20000)">Beli Sekarang</button>
+      </div>
+      <div class="plan-card best" data-plan="pro" data-harga="59000">
+        <div class="tag">★ TERBAIK</div>
+        <h3>PRO</h3>
+        <div class="price">Rp 59.000<span>/bulan</span></div>
+        <ul>
+          <li>✓ 35 halaman/hari</li><li>✓ 50 Chat DoktrAI</li><li>✓ Generate lebih cepat</li><li>✓ Cocok untuk skripsi & freelancer</li>
+        </ul>
+        <button class="btn btn-primary btn-block btn-sm" onclick="beliPaket('pro',59000)">Beli Sekarang</button>
+      </div>
+      <div class="plan-card" data-plan="lanjutan" data-harga="99000">
+        <h3>LANJUTAN</h3>
+        <div class="price">Rp 99.000<span>/bulan</span></div>
+        <ul>
+          <li>✓ 60 halaman/hari</li><li>✓ Chat tanpa batas</li><li>✓ Prioritas tertinggi</li><li>✓ Cocok untuk tim & profesional</li>
+        </ul>
+        <button class="btn btn-primary btn-block btn-sm" onclick="beliPaket('lanjutan',99000)">Beli Sekarang</button>
+      </div>
+    </div>
+
+    <p class="fw-800 mt-24 mb-8">Perbandingan Paket</p>
+    <table class="compare-table">
+      <tr><th>Fitur</th><th>Gratis</th><th>Standar</th><th>Pro</th><th>Lanjutan</th></tr>
+      <tr><td>Halaman/hari</td><td>5</td><td>10</td><td>35</td><td>60</td></tr>
+      <tr><td>Chat DoktrAI</td><td>5</td><td>20</td><td>50</td><td>Unlimited</td></tr>
+      <tr><td>Riwayat</td><td>7 Hari</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+    </table>
+
+    <p class="fw-800 mt-24 mb-8">Pertanyaan yang Sering Diajukan</p>
+    <div class="faq-item"><b>Kapan kuota direset? <span>⌄</span></b><p>Kuota direset setiap hari pukul 00.00 WIB.</p></div>
+    <div class="faq-item"><b>Bisa upgrade kapan saja? <span>⌄</span></b><p>Bisa. Kamu dapat upgrade atau downgrade paket kapan pun.</p></div>
+    <div class="faq-item"><b>Pembayaran apa saja? <span>⌄</span></b><p>Kami menerima QRIS, transfer bank, e-wallet, dan kartu kredit/debit via Midtrans.</p></div>
+
+    <p class="fw-800 mt-24 mb-8">Metode Pembayaran</p>
+    <div class="pay-methods">
+      <span>QRIS</span><span>BCA</span><span>BRI</span><span>Mandiri</span><span>BNI</span><span>DANA</span><span>OVO</span><span>GoPay</span>
+    </div>
+    <p class="text-sm text-muted mt-16 text-center">🔒 Data dienkripsi & dilindungi sistem keamanan terbaik. Didukung oleh Midtrans.</p>
+  </div>
+
+  <div class="bottom-nav" id="bottomNav"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  document.getElementById('bottomNav').innerHTML = renderBottomNav('kuota');
+  wajibLogin();
+
+  async function beliPaket(paket, hargaAsli){
+    try{
+      tampilkanToast('Menyiapkan pembayaran ' + paket.toUpperCase() + '...');
+      const hasil = await mulaiPembayaran({ paket, hargaAsli });
+      if(hasil.redirect_url) window.location.href = hasil.redirect_url;
+    }catch(err){
+      tampilkanToast(err.message);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dokumen Saya — asistenku.pro</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .doc-item{border:1px solid var(--gray-200);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center}
+  .doc-item .ic{width:38px;height:38px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+  .doc-item h4{margin:0 0 3px;font-size:13.5px}
+  .doc-item p{margin:0;font-size:11.5px;color:var(--gray-500)}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="topbar-back">
+      <a class="icon-btn" href="dashboard.html">←</a>
+      <div>
+        <div class="page-title">Dokumen Saya</div>
+        <div class="page-sub">Semua dokumen yang pernah dibuat</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <input class="input mb-16" placeholder="🔎  Cari dokumen...">
+    <div id="listDokumen">
+      <p class="text-sm text-muted text-center mt-24">Memuat dokumen...</p>
+    </div>
+  </div>
+
+  <div class="bottom-nav" id="bottomNav"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  document.getElementById('bottomNav').innerHTML = renderBottomNav('dokumen');
+
+  (async () => {
+    const user = await wajibLogin();
+    if(!user) return;
+    const box = document.getElementById('listDokumen');
+    try{
+      const { data } = await supabaseClient.from('documents').select('*')
+        .eq('user_id', user.auth.id).order('created_at', { ascending:false }).limit(50);
+      if(!data || !data.length){
+        box.innerHTML = `<p class="text-sm text-muted text-center mt-24">Belum ada dokumen. Mulai buat di <a class="link" href="mahasiswa.html">Mahasiswa & Siswa</a> atau <a class="link" href="tugas.html">Tugas & Project</a>.</p>`;
+        return;
+      }
+      box.innerHTML = data.map(d => `
+        <div class="doc-item">
+          <div class="ic">📄</div>
+          <div style="flex:1"><h4>${d.title || d.type}</h4><p>${d.pages||'-'} halaman • ${new Date(d.created_at).toLocaleDateString('id-ID')}</p></div>
+          <span class="badge badge-green">Selesai</span>
+        </div>`).join('');
+    }catch(e){
+      box.innerHTML = `<p class="text-sm text-muted text-center mt-24">Belum ada dokumen tersimpan.</p>`;
+    }
+  })();
+</script>
+</body>
+</html>
