@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel – asistenku.pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared-config.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#1A3DC2;--blue-light:#3B5BFF;--blue-pale:#EEF2FF;
+  --green:#16A34A;--green-pale:#F0FDF4;
+  --red:#DC2626;--red-pale:#FEF2F2;
+  --yellow:#F59E0B;--yellow-pale:#FFFBEB;
+  --purple:#7C3AED;--purple-pale:#F5F3FF;
+  --dark:#111827;--white:#ffffff;
+  --gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;
+  --gray-400:#9CA3AF;--gray-500:#6B7280;--gray-700:#374151;
+  --sidebar-w:240px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gray-50);color:var(--dark);min-height:100vh;display:flex;}
+.sidebar{width:var(--sidebar-w);background:var(--dark);display:flex;flex-direction:column;min-height:100vh;position:fixed;left:0;top:0;z-index:100;transition:transform .3s;}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sidebar-logo .logo-text{font-size:18px;font-weight:800;color:#fff;}
+.sidebar-logo .pro-pill{background:var(--blue-light);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;}
+.sidebar-logo .admin-pill{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:2px;}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-section-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.8px;text-transform:uppercase;padding:10px 10px 4px;margin-top:8px;}
+.nav-section-label:first-child{margin-top:0;}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.65);text-decoration:none;cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.sidebar-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar-link.active{background:var(--blue-light);color:#fff;}
+.sidebar-link svg{width:17px;height:17px;flex-shrink:0;}
+.sidebar-link .badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:auto;}
+.sidebar-bottom{padding:12px;border-top:1px solid rgba(255,255,255,.1);}
+.sidebar-user{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer;}
+.sidebar-user:hover{background:rgba(255,255,255,.08);}
+.sidebar-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
+.sidebar-user-info{flex:1;}
+.sidebar-user-name{font-size:12px;font-weight:700;color:#fff;}
+.sidebar-user-role{font-size:10px;color:rgba(255,255,255,.5);}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:12px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.menu-toggle{display:none;background:none;border:none;cursor:pointer;}
+.topbar-title{font-size:18px;font-weight:800;color:var(--dark);flex:1;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--dark);transition:background .15s;}
+.topbar-btn:hover{background:var(--gray-50);}
+.topbar-btn.primary{background:var(--blue-light);color:#fff;border-color:var(--blue-light);}
+.topbar-btn.primary:hover{background:var(--blue);}
+.content{padding:24px;flex:1;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-200);padding:20px;display:flex;flex-direction:column;gap:8px;}
+.stat-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.stat-card-icon svg{width:22px;height:22px;color:#fff;}
+.stat-value{font-size:26px;font-weight:800;color:var(--dark);}
+.stat-label{font-size:12px;color:var(--gray-500);font-weight:500;}
+.table-card{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;overflow:hidden;margin-bottom:24px;}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--gray-200);gap:10px;flex-wrap:wrap;}
+.table-title{font-size:15px;font-weight:700;color:var(--dark);}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px;padding:10px 20px;text-align:left;background:var(--gray-50);}
+tbody td{padding:12px 20px;font-size:13px;color:var(--dark);border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--gray-50);}
+.td-user{display:flex;align-items:center;gap:10px;}
+.user-av{width:30px;height:30px;border-radius:50%;background:var(--blue-pale);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0;}
+.user-name{font-weight:600;color:var(--dark);}
+.user-email{font-size:11px;color:var(--gray-400);}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge.gratis{background:var(--gray-100);color:var(--gray-500);}
+.badge.standar{background:var(--blue-pale);color:var(--blue);}
+.badge.pro{background:linear-gradient(90deg,var(--blue-light),var(--purple));color:#fff;}
+.badge.lanjutan{background:var(--dark);color:#fff;}
+.badge.ultra{background:linear-gradient(90deg,#F59E0B,#DC2626);color:#fff;}
+.badge.active{background:var(--green-pale);color:var(--green);}
+.badge.inactive{background:var(--red-pale);color:var(--red);}
+.badge.pending{background:var(--yellow-pale);color:var(--yellow);}
+.action-btn{padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-200);background:var(--white);font-size:11px;font-weight:600;color:var(--dark);cursor:pointer;font-family:inherit;transition:background .15s;margin-right:4px;}
+.action-btn:hover{background:var(--gray-50);}
+.action-btn.danger{color:var(--red);border-color:var(--red-pale);}
+.action-btn.success{color:var(--green);border-color:var(--green-pale);}
+.page{display:none;}
+.page.active{display:block;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;max-width:80vw;}
+.toast.show{opacity:1;transform:translateY(0);}
+.mini-stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.mini-stat{flex:1;min-width:140px;background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;}
+.mini-stat-label{font-size:11px;color:var(--gray-500);margin-bottom:2px;}
+.mini-stat-val{font-size:20px;font-weight:800;color:var(--dark);}
+.form-card{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:20px;margin-bottom:16px;}
+.form-card-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;color:var(--dark);margin-bottom:6px;display:block;}
+.form-input{width:100%;padding:9px 11px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;color:var(--dark);outline:none;background:var(--white);}
+.form-input:focus{border-color:var(--blue-light);}
+.search-input{padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:inherit;outline:none;min-width:200px;}
+.pkg-card{border:1.5px solid var(--gray-200);border-radius:14px;padding:16px;margin-bottom:12px;}
+.pkg-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.pkg-head b{font-size:14px;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;}
+.notif-item{border:1.5px solid var(--gray-200);border-radius:12px;padding:14px;margin-bottom:10px;}
+.notif-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .form-row,.form-row3{grid-template-columns:1fr;}
+  .menu-toggle{display:flex;}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="20" fill="#3B5BFF"/><ellipse cx="20" cy="17" rx="10" ry="10" fill="#F5F5F5"/>
+      <ellipse cx="20" cy="30" rx="8" ry="7" fill="#1A2B6D"/><ellipse cx="15" cy="17" rx="3" ry="3.5" fill="#1A90FF"/>
+      <ellipse cx="25" cy="17" rx="3" ry="3.5" fill="#1A90FF"/><ellipse cx="20" cy="23" rx="2.5" ry="1.5" fill="#FFB6C1"/>
+    </svg>
+    <div><span class="logo-text">asistenku</span><span class="pro-pill">.pro</span><span class="admin-pill">ADMIN</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Utama</div>
+    <button class="sidebar-link active" onclick="showPage('dashboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+    <button class="sidebar-link" onclick="showPage('users',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Pengguna <span class="badge" id="navUserCount" style="background:var(--blue-light);color:#fff;">–</span></button>
+    <button class="sidebar-link" onclick="showPage('transaksi',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Transaksi <span class="badge" id="navTxCount" style="background:var(--yellow);color:#fff;">–</span></button>
+    <div class="nav-section-label">Konten &amp; Harga</div>
+    <button class="sidebar-link" onclick="showPage('paket',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Paket &amp; Harga</button>
+    <button class="sidebar-link" onclick="showPage('notifikasi',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Info &amp; Notifikasi</button>
+    <button class="sidebar-link" onclick="showPage('kuota',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saldo &amp; Kuota API</button>
+    <div class="nav-section-label">Sistem</div>
+    <button class="sidebar-link" onclick="showPage('pengaturan',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pengaturan Sistem</button>
+    <button class="sidebar-link" onclick="showPage('logs',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Log Aktivitas</button>
+    <a href="beranda.html" class="sidebar-link" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Lihat Website</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user" onclick="handleLogout()">
+      <div class="sidebar-avatar" id="adminAvatar">A</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Admin</div><div class="sidebar-user-role">Super Administrator</div></div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <button class="menu-toggle topbar-btn" id="menuToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <button class="topbar-btn" onclick="loadAll()">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-card-icon" style="background:linear-gradient(135deg,#3B5BFF,#1A3DC2);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="stat-value" id="statUsers">–</div><div class="stat-label">Total Pengguna Terdaftar</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:linear-gradient(135deg,#16A34A,#15803D);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-value" id="statRevenue">–</div><div class="stat-label">Pendapatan Bulan Ini (riil)</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div class="stat-value" id="statBlocked">–</div><div class="stat-label">Pengguna Diblokir</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-value" id="statApiBudget">–</div><div class="stat-label">Sisa Saldo API (USD)</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Distribusi Paket Pengguna</div></div>
+        <div style="padding:16px 20px;"><div id="planDistribution" class="mini-stats"></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Transaksi Terbaru</div></div>
+        <table><thead><tr><th>Pengguna</th><th>Paket</th><th>Jumlah</th><th>Status</th><th>Waktu</th></tr></thead><tbody id="dashTxBody"><tr><td colspan="5" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Manajemen Pengguna</div>
+          <input type="text" class="search-input" id="userSearch" placeholder="Cari email / nama..." oninput="renderUsers()">
+        </div>
+        <table><thead><tr><th>Pengguna</th><th>Paket</th><th>Status</th><th>Halaman Terpakai/Hari</th><th>Aksi</th></tr></thead><tbody id="usersBody"><tr><td colspan="5" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- TRANSAKSI -->
+    <div class="page" id="page-transaksi">
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Semua Transaksi</div></div>
+        <table><thead><tr><th>Pengguna</th><th>Paket</th><th>Jumlah</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead><tbody id="txBody"><tr><td colspan="6" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- PAKET & HARGA -->
+    <div class="page" id="page-paket">
+      <div class="form-card">
+        <div class="form-card-title">Cara Kerja Harga Ganda</div>
+        <p style="font-size:12.5px;color:var(--gray-500);line-height:1.6;">
+          <b>Harga Asli</b> = jumlah yang benar-benar ditagihkan ke Midtrans &amp; masuk rekening.
+          <b>Harga Tampilan</b> = angka yang dilihat pengguna di halaman upgrade.
+          <b>Harga Coret</b> = harga lama yang dicoret untuk kesan diskon (opsional, kosongkan jika tidak dipakai).
+          Kata per halaman dipakai untuk menghitung otomatis berapa halaman yang terpakai dari jumlah kata hasil AI.
+        </p>
+      </div>
+      <div id="packagesList"><div class="empty-state">Memuat paket…</div></div>
+    </div>
+
+    <!-- NOTIFIKASI -->
+    <div class="page" id="page-notifikasi">
+      <div class="form-card">
+        <div class="form-card-title">Kirim Pemberitahuan Baru</div>
+        <div class="form-group"><label class="form-label">Judul</label><input type="text" class="form-input" id="notifTitle" placeholder="Mis. Promo 17 Agustus"></div>
+        <div class="form-group"><label class="form-label">Pesan</label><input type="text" class="form-input" id="notifMsg" placeholder="Isi pemberitahuan untuk pengguna"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Target</label>
+            <select class="form-input" id="notifTarget">
+              <option value="all">Semua pengguna</option>
+              <option value="gratis">Pengguna paket Gratis</option>
+              <option value="standar">Pengguna paket Standar</option>
+              <option value="pro">Pengguna paket Pro</option>
+              <option value="lanjutan">Pengguna paket Lanjutan</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Link tujuan (opsional)</label><input type="text" class="form-input" id="notifLink" placeholder="upgrade.html"></div>
+        </div>
+        <button class="topbar-btn primary" onclick="sendNotification()">Kirim Pemberitahuan</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Riwayat Pemberitahuan</div></div>
+        <div id="notifList" style="padding:16px 20px;"><div class="empty-state">Memuat…</div></div>
+      </div>
+    </div>
+
+    <!-- KUOTA / API -->
+    <div class="page" id="page-kuota">
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="mini-stat-label">Total Top Up (USD)</div><div class="mini-stat-val" id="kuotaTotal">–</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Terpakai (USD)</div><div class="mini-stat-val" id="kuotaUsed">–</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Sisa Saldo (USD)</div><div class="mini-stat-val" id="kuotaLeft" style="color:var(--green);">–</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Token Terpakai (30 hari)</div><div class="mini-stat-val" id="kuotaTokens">–</div></div>
+      </div>
+      <div class="form-card">
+        <div class="form-card-title">Beli / Catat Top Up Saldo API</div>
+        <p style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">Isi saldo API dilakukan langsung di dashboard Anthropic Console. Gunakan form ini untuk MENCATAT top up tersebut supaya panel admin tahu sisa saldo Anda.</p>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Jumlah Top Up (USD)</label><input type="number" step="0.01" class="form-input" id="topupAmount" placeholder="50"></div>
+          <div class="form-group"><label class="form-label">Catatan</label><input type="text" class="form-input" id="topupNote" placeholder="Top up Juli 2026"></div>
+        </div>
+        <button class="topbar-btn primary" onclick="addTopup()">Catat Top Up</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Riwayat Top Up</div></div>
+        <table><thead><tr><th>Tanggal</th><th>Jumlah (USD)</th><th>Catatan</th></tr></thead><tbody id="topupBody"><tr><td colspan="3" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- PENGATURAN -->
+    <div class="page" id="page-pengaturan">
+      <div class="form-card">
+        <div class="form-card-title">Informasi Website</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nama Website</label><input type="text" class="form-input" id="setSiteName"></div>
+          <div class="form-group"><label class="form-label">Email Support</label><input type="email" class="form-input" id="setSupportEmail"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Maintenance Mode</label>
+          <select class="form-input" id="setMaintenance"><option value="off">Off (Normal)</option><option value="on">On (Maintenance)</option></select>
+        </div>
+        <button class="topbar-btn primary" onclick="saveSettings()">Simpan</button>
+      </div>
+      <div class="form-card">
+        <div class="form-card-title">Catatan Keamanan</div>
+        <p style="font-size:12.5px;color:var(--gray-500);line-height:1.6;">
+          Kunci Anthropic API TIDAK disimpan di panel ini karena panel ini berjalan di browser (bisa dilihat siapa saja yang membuka source code).
+          Simpan kunci Anthropic sebagai <b>Environment Variable</b> di pengaturan project Vercel Anda (nama variabel: <code>ANTHROPIC_API_KEY</code>), lalu dipakai oleh <code>api/generate.js</code> di server — bukan di sini.
+        </p>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="page" id="page-logs">
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Log Aktivitas Sistem</div></div>
+        <table><thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Status</th></tr></thead><tbody id="logsBody"><tr><td colspan="4" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Log Perubahan oleh Admin</div></div>
+        <table><thead><tr><th>Waktu</th><th>Admin</th><th>Target</th><th>Aksi</th><th>Detail</th></tr></thead><tbody id="adminLogBody"><tr><td colspan="5" class="empty-state">Memuat…</td></tr></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = akCreateClient();
+let CURRENT_ADMIN_EMAIL = '';
+let PACKAGES_CACHE = [];
+let USERS_CACHE = [];
+
+function showToast(msg, d = 2600) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), d); }
+function fmtIDR(n) { return 'Rp' + Number(n || 0).toLocaleString('id-ID'); }
+function fmtDate(iso) { if (!iso) return '-'; return new Date(iso).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); }
+function planBadge(plan) { return `<span class="badge ${plan}">${(plan || 'gratis')}</span>`; }
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id)?.classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = { dashboard: 'Dashboard', users: 'Manajemen Pengguna', transaksi: 'Transaksi & Pembayaran', paket: 'Paket & Harga', notifikasi: 'Info & Pemberitahuan', kuota: 'Saldo & Kuota API', pengaturan: 'Pengaturan Sistem', logs: 'Log Aktivitas' };
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+  window.scrollTo(0, 0);
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+async function logAdminChange(action, targetEmail, detail) {
+  await sb.from('admin_change_log').insert({ admin_email: CURRENT_ADMIN_EMAIL, target_user_email: targetEmail, action, detail });
+}
+
+// ===== AUTH GUARD =====
+async function guardAndInit() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'admin-login.html'; return; }
+  const { data: adminRow } = await sb.from('admins').select('id,email').eq('id', session.user.id).maybeSingle();
+  if (!adminRow) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return; }
+  CURRENT_ADMIN_EMAIL = adminRow.email || session.user.email;
+  const name = CURRENT_ADMIN_EMAIL.split('@')[0];
+  document.getElementById('adminName').textContent = name;
+  document.getElementById('adminAvatar').textContent = name[0]?.toUpperCase() || 'A';
+  loadAll();
+}
+function handleLogout() { if (confirm('Keluar dari admin panel?')) { sb.auth.signOut().then(() => window.location.href = 'admin-login.html'); } }
+
+// ===== LOAD ALL =====
+async function loadAll() {
+  await Promise.all([loadDashboard(), loadUsers(), loadPackages(), loadTransactions(), loadNotifications(), loadKuota(), loadSettings(), loadLogs()]);
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  const { data: profiles } = await sb.from('profiles').select('plan,blocked');
+  const list = profiles || [];
+  document.getElementById('statUsers').textContent = list.length.toLocaleString('id-ID');
+  document.getElementById('statBlocked').textContent = list.filter(u => u.blocked).length;
+  document.getElementById('navUserCount').textContent = list.length;
+
+  const dist = {};
+  list.forEach(u => { dist[u.plan] = (dist[u.plan] || 0) + 1; });
+  const colors = { gratis: '#9CA3AF', standar: '#3B5BFF', pro: '#7C3AED', lanjutan: '#111827', ultra: '#F59E0B' };
+  document.getElementById('planDistribution').innerHTML = Object.keys(dist).map(k =>
+    `<div class="mini-stat" style="border-left:4px solid ${colors[k] || '#ccc'};"><div class="mini-stat-label">${k}</div><div class="mini-stat-val">${dist[k]}</div></div>`
+  ).join('') || '<div class="empty-state">Belum ada data pengguna</div>';
+
+  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const { data: txs } = await sb.from('transactions').select('*').eq('status', 'success').gte('created_at', startOfMonth.toISOString());
+  const revenue = (txs || []).reduce((s, t) => s + (t.amount || 0), 0);
+  document.getElementById('statRevenue').textContent = fmtIDR(revenue);
+
+  const { data: recentTx } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(6);
+  document.getElementById('dashTxBody').innerHTML = (recentTx || []).map(t =>
+    `<tr><td>${t.user_email || '-'}</td><td>${planBadge(t.package_key)}</td><td>${fmtIDR(t.amount)}</td><td><span class="badge ${t.status === 'success' ? 'active' : t.status === 'failed' ? 'inactive' : 'pending'}">${t.status}</span></td><td>${fmtDate(t.created_at)}</td></tr>`
+  ).join('') || '<tr><td colspan="5" class="empty-state">Belum ada transaksi</td></tr>';
+
+  const { data: budget } = await sb.from('api_budget').select('topup_amount_usd');
+  const { data: usage } = await sb.from('api_usage_log').select('cost_usd');
+  const totalBudget = (budget || []).reduce((s, b) => s + Number(b.topup_amount_usd || 0), 0);
+  const totalUsed = (usage || []).reduce((s, u) => s + Number(u.cost_usd || 0), 0);
+  document.getElementById('statApiBudget').textContent = '$' + (totalBudget - totalUsed).toFixed(2);
+}
+
+// ===== USERS =====
+async function loadUsers() {
+  const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false }).limit(500);
+  USERS_CACHE = data || [];
+  renderUsers();
+}
+function renderUsers() {
+  const q = (document.getElementById('userSearch').value || '').toLowerCase();
+  const list = USERS_CACHE.filter(u => !q || (u.email || '').toLowerCase().includes(q) || (u.full_name || '').toLowerCase().includes(q));
+  document.getElementById('usersBody').innerHTML = list.map(u => `
+    <tr>
+      <td><div class="td-user"><div class="user-av">${(u.full_name || u.email || '?')[0].toUpperCase()}</div>
+        <div><div class="user-name">${u.full_name || '-'}</div><div class="user-email">${u.email || '-'}</div></div></div></td>
+      <td>
+        <select class="form-input" style="padding:5px 8px;font-size:12px;width:auto;" onchange="changePlanFree('${u.id}','${u.email}',this.value)">
+          ${['gratis', 'standar', 'pro', 'lanjutan'].map(p => `<option value="${p}" ${u.plan === p ? 'selected' : ''}>${p}</option>`).join('')}
+        </select>
+      </td>
+      <td>${u.blocked ? '<span class="badge inactive">Diblokir</span>' : '<span class="badge active">Aktif</span>'}</td>
+      <td>${u.halaman_used_today || 0}</td>
+      <td>
+        <button class="action-btn ${u.blocked ? 'success' : 'danger'}" onclick="toggleBlock('${u.id}','${u.email}',${u.blocked})">${u.blocked ? 'Buka Blokir' : 'Blokir'}</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty-state">Tidak ada pengguna cocok pencarian</td></tr>';
+}
+async function toggleBlock(id, email, isBlocked) {
+  const newVal = !isBlocked;
+  if (!confirm((newVal ? 'Blokir' : 'Buka blokir') + ' pengguna ' + email + '?')) return;
+  const { error } = await sb.from('profiles').update({ blocked: newVal, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  await logAdminChange(newVal ? 'block' : 'unblock', email, '');
+  showToast(newVal ? 'Pengguna diblokir ✓' : 'Blokir dibuka ✓');
+  loadUsers();
+}
+async function changePlanFree(id, email, newPlan) {
+  const { error } = await sb.from('profiles').update({ plan: newPlan, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  await logAdminChange('ubah_paket_manual', email, 'Diubah ke paket ' + newPlan + ' oleh admin (gratis, tanpa bayar)');
+  showToast('Paket ' + email + ' diubah ke ' + newPlan + ' ✓');
+  loadUsers(); loadDashboard();
+}
+
+// ===== TRANSACTIONS =====
+async function loadTransactions() {
+  const { data } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(200);
+  const list = data || [];
+  document.getElementById('navTxCount').textContent = list.filter(t => t.status === 'pending').length;
+  document.getElementById('txBody').innerHTML = list.map(t => `
+    <tr>
+      <td>${t.user_email || '-'}</td><td>${planBadge(t.package_key)}</td><td>${fmtIDR(t.amount)}</td>
+      <td><span class="badge ${t.status === 'success' ? 'active' : t.status === 'failed' ? 'inactive' : 'pending'}">${t.status}</span></td>
+      <td>${fmtDate(t.created_at)}</td>
+      <td>${t.status === 'pending' ? `<button class="action-btn success" onclick="confirmTx('${t.id}','${t.user_email}')">Konfirmasi</button>` : '-'}</td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty-state">Belum ada transaksi</td></tr>';
+}
+async function confirmTx(id, email) {
+  const { error } = await sb.from('transactions').update({ status: 'success' }).eq('id', id);
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  await logAdminChange('konfirmasi_transaksi', email, 'Transaksi ' + id + ' dikonfirmasi manual');
+  showToast('Transaksi dikonfirmasi ✓');
+  loadTransactions(); loadDashboard();
+}
+
+// ===== PACKAGES / PRICING =====
+async function loadPackages() {
+  const { data } = await sb.from('packages').select('*').order('sort_order', { ascending: true });
+  PACKAGES_CACHE = data || [];
+  document.getElementById('packagesList').innerHTML = PACKAGES_CACHE.map(p => `
+    <div class="pkg-card">
+      <div class="pkg-head">${planBadge(p.key)}<b>${p.label}</b>
+        <label style="margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="active_${p.key}" ${p.active ? 'checked' : ''}> Aktif
+        </label>
+      </div>
+      <div class="form-row3">
+        <div class="form-group"><label class="form-label">Harga Asli (Rp, ditagihkan)</label><input type="number" class="form-input" id="real_${p.key}" value="${p.real_price}"></div>
+        <div class="form-group"><label class="form-label">Harga Tampilan (Rp)</label><input type="number" class="form-input" id="disp_${p.key}" value="${p.display_price}"></div>
+        <div class="form-group"><label class="form-label">Harga Coret (Rp, opsional)</label><input type="number" class="form-input" id="strike_${p.key}" value="${p.strike_price ?? ''}"></div>
+      </div>
+      <div class="form-row3">
+        <div class="form-group"><label class="form-label">Jatah Halaman / Hari</label><input type="number" class="form-input" id="hal_${p.key}" value="${p.halaman_limit}"></div>
+        <div class="form-group"><label class="form-label">Jatah Pesan DoktrAI / Hari</label><input type="number" class="form-input" id="pesan_${p.key}" value="${p.pesan_limit}"></div>
+        <div class="form-group"><label class="form-label">Kata per Halaman</label><input type="number" class="form-input" id="kata_${p.key}" value="${p.words_per_page}"></div>
+      </div>
+      <button class="topbar-btn primary" onclick="savePackage('${p.key}')">Simpan Paket ${p.label}</button>
+    </div>`).join('');
+}
+async function savePackage(key) {
+  const payload = {
+    real_price: Number(document.getElementById('real_' + key).value || 0),
+    display_price: Number(document.getElementById('disp_' + key).value || 0),
+    strike_price: document.getElementById('strike_' + key).value ? Number(document.getElementById('strike_' + key).value) : null,
+    halaman_limit: Number(document.getElementById('hal_' + key).value || 0),
+    pesan_limit: Number(document.getElementById('pesan_' + key).value || 0),
+    words_per_page: Number(document.getElementById('kata_' + key).value || 450),
+    active: document.getElementById('active_' + key).checked,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await sb.from('packages').update(payload).eq('key', key);
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  await logAdminChange('ubah_harga_paket', null, key + ': ' + JSON.stringify(payload));
+  showToast('Paket ' + key + ' disimpan ✓ — langsung berlaku di website konsumen');
+  loadPackages();
+}
+
+// ===== NOTIFICATIONS =====
+async function sendNotification() {
+  const title = document.getElementById('notifTitle').value.trim();
+  const message = document.getElementById('notifMsg').value.trim();
+  const target = document.getElementById('notifTarget').value;
+  const link = document.getElementById('notifLink').value.trim() || null;
+  if (!title || !message) { showToast('Isi judul dan pesan dulu'); return; }
+  const { error } = await sb.from('notifications').insert({ title, message, target, link, created_by: CURRENT_ADMIN_EMAIL });
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  document.getElementById('notifTitle').value = ''; document.getElementById('notifMsg').value = ''; document.getElementById('notifLink').value = '';
+  showToast('Pemberitahuan terkirim ✓');
+  loadNotifications();
+}
+async function loadNotifications() {
+  const { data } = await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+  document.getElementById('notifList').innerHTML = (data || []).map(n => `
+    <div class="notif-item">
+      <div class="notif-item-top"><b>${n.title}</b><span class="badge ${n.active ? 'active' : 'inactive'}">${n.active ? 'aktif' : 'nonaktif'}</span></div>
+      <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:6px;">${n.message}</div>
+      <div style="font-size:11px;color:var(--gray-400);">Target: ${n.target} • ${fmtDate(n.created_at)}</div>
+      <button class="action-btn" style="margin-top:8px;" onclick="toggleNotif('${n.id}',${!n.active})">${n.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+      <button class="action-btn danger" onclick="deleteNotif('${n.id}')">Hapus</button>
+    </div>`).join('') || '<div class="empty-state">Belum ada pemberitahuan</div>';
+}
+async function toggleNotif(id, val) { await sb.from('notifications').update({ active: val }).eq('id', id); loadNotifications(); }
+async function deleteNotif(id) { if (!confirm('Hapus pemberitahuan ini?')) return; await sb.from('notifications').delete().eq('id', id); loadNotifications(); }
+
+// ===== API BUDGET / KUOTA =====
+async function loadKuota() {
+  const { data: budget } = await sb.from('api_budget').select('*').order('created_at', { ascending: false });
+  const { data: usage } = await sb.from('api_usage_log').select('*').gte('usage_date', new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
+  const totalBudget = (budget || []).reduce((s, b) => s + Number(b.topup_amount_usd || 0), 0);
+  const totalUsed = (usage || []).reduce((s, u) => s + Number(u.cost_usd || 0), 0);
+  const totalTokens = (usage || []).reduce((s, u) => s + Number(u.tokens_used || 0), 0);
+  document.getElementById('kuotaTotal').textContent = '$' + totalBudget.toFixed(2);
+  document.getElementById('kuotaUsed').textContent = '$' + totalUsed.toFixed(2);
+  document.getElementById('kuotaLeft').textContent = '$' + (totalBudget - totalUsed).toFixed(2);
+  document.getElementById('kuotaTokens').textContent = totalTokens.toLocaleString('id-ID');
+  document.getElementById('topupBody').innerHTML = (budget || []).map(b =>
+    `<tr><td>${fmtDate(b.created_at)}</td><td>$${Number(b.topup_amount_usd).toFixed(2)}</td><td>${b.note || '-'}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="empty-state">Belum ada top up tercatat</td></tr>';
+}
+async function addTopup() {
+  const amount = Number(document.getElementById('topupAmount').value || 0);
+  const note = document.getElementById('topupNote').value.trim();
+  if (!amount) { showToast('Isi jumlah top up'); return; }
+  const { error } = await sb.from('api_budget').insert({ topup_amount_usd: amount, note, created_by: CURRENT_ADMIN_EMAIL });
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  document.getElementById('topupAmount').value = ''; document.getElementById('topupNote').value = '';
+  showToast('Top up dicatat ✓');
+  loadKuota(); loadDashboard();
+}
+
+// ===== SETTINGS =====
+async function loadSettings() {
+  const { data } = await sb.from('settings').select('*');
+  const map = {}; (data || []).forEach(s => map[s.key] = s.value);
+  document.getElementById('setSiteName').value = map.site_name || '';
+  document.getElementById('setSupportEmail').value = map.support_email || '';
+  document.getElementById('setMaintenance').value = map.maintenance_mode || 'off';
+}
+async function saveSettings() {
+  const rows = [
+    { key: 'site_name', value: document.getElementById('setSiteName').value, updated_at: new Date().toISOString() },
+    { key: 'support_email', value: document.getElementById('setSupportEmail').value, updated_at: new Date().toISOString() },
+    { key: 'maintenance_mode', value: document.getElementById('setMaintenance').value, updated_at: new Date().toISOString() }
+  ];
+  const { error } = await sb.from('settings').upsert(rows);
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  showToast('Pengaturan disimpan ✓');
+}
+
+// ===== LOGS =====
+async function loadLogs() {
+  const { data: acts } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+  document.getElementById('logsBody').innerHTML = (acts || []).map(l =>
+    `<tr><td>${fmtDate(l.created_at)}</td><td>${l.user_email || '-'}</td><td>${l.action}</td><td><span class="badge ${l.status === 'success' ? 'active' : 'inactive'}">${l.status}</span></td></tr>`
+  ).join('') || '<tr><td colspan="4" class="empty-state">Belum ada log</td></tr>';
+
+  const { data: adminLogs } = await sb.from('admin_change_log').select('*').order('created_at', { ascending: false }).limit(50);
+  document.getElementById('adminLogBody').innerHTML = (adminLogs || []).map(l =>
+    `<tr><td>${fmtDate(l.created_at)}</td><td>${l.admin_email}</td><td>${l.target_user_email || '-'}</td><td>${l.action}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.detail || '-'}</td></tr>`
+  ).join('') || '<tr><td colspan="5" class="empty-state">Belum ada perubahan admin</td></tr>';
+}
+
+guardAndInit();
+</script>
+</body>
+</html>

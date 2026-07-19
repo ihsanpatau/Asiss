@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk Admin – asistenku.pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared-config.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#0B0E17;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:#fff;border-radius:20px;padding:36px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.logo{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:6px;}
+.logo-text{font-size:20px;font-weight:800;color:#111827;}
+.pro-pill{background:#3B5BFF;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.admin-pill{background:#DC2626;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.sub{text-align:center;color:#6B7280;font-size:12.5px;margin-bottom:24px;}
+.field{margin-bottom:14px;}
+label{font-size:12.5px;font-weight:600;color:#111827;display:block;margin-bottom:5px;}
+input{width:100%;padding:11px 13px;border:1.5px solid #E5E7EB;border-radius:10px;font-family:inherit;font-size:13.5px;outline:none;}
+input:focus{border-color:#3B5BFF;}
+.pass-wrap{position:relative;}
+.toggle-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;background:none;border:none;font-size:11px;color:#6B7280;font-weight:600;}
+button.submit{width:100%;padding:12px;border:none;border-radius:10px;background:#1A3DC2;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
+button.submit:disabled{opacity:.6;cursor:default;}
+.err{display:none;background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:14px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#111827;color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><span class="logo-text">asistenku</span><span class="pro-pill">.pro</span><span class="admin-pill">ADMIN</span></div>
+  <div class="sub">Panel ini hanya untuk pemilik &amp; tim internal. Login memakai akun yang sudah didaftarkan sebagai admin di Supabase.</div>
+  <div class="err" id="errorMsg"></div>
+  <div class="field"><label>Email</label><input type="email" id="email" autocomplete="username"></div>
+  <div class="field"><label>Kata Sandi</label>
+    <div class="pass-wrap">
+      <input type="password" id="password" autocomplete="current-password">
+      <button type="button" class="toggle-eye" onclick="togglePass()">LIHAT</button>
+    </div>
+  </div>
+  <button class="submit" id="loginBtn" onclick="handleAdminLogin()">Masuk ke Admin Panel</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = akCreateClient();
+
+function showToast(msg, d = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), d);
+}
+function togglePass() {
+  const inp = document.getElementById('password');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function showError(msg) {
+  const err = document.getElementById('errorMsg');
+  err.textContent = msg; err.style.display = 'block';
+}
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+
+async function handleAdminLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  hideError();
+  if (!email || !password) { showError('Isi email dan kata sandi'); return; }
+
+  btn.textContent = 'Memverifikasi...'; btn.disabled = true;
+
+  // 1) Login lewat Supabase Auth sungguhan — TIDAK ADA mode demo/fallback.
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || !data.session) {
+    showError('Email atau kata sandi salah.');
+    btn.textContent = 'Masuk ke Admin Panel'; btn.disabled = false;
+    return;
+  }
+
+  // 2) Wajib cek: akun ini terdaftar di tabel public.admins?
+  const { data: adminRow, error: adminErr } = await sb
+    .from('admins').select('id').eq('id', data.session.user.id).maybeSingle();
+
+  if (adminErr || !adminRow) {
+    await sb.auth.signOut();
+    showError('Akun ini tidak memiliki akses admin.');
+    btn.textContent = 'Masuk ke Admin Panel'; btn.disabled = false;
+    return;
+  }
+
+  showToast('Selamat datang, Admin! 🎉');
+  setTimeout(() => window.location.href = 'admin.html', 700);
+}
+
+document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleAdminLogin(); });
+document.getElementById('email').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('password').focus(); });
+
+// Kalau sudah login & memang admin, langsung lempar ke admin.html
+sb.auth.getSession().then(async ({ data }) => {
+  if (!data.session) return;
+  const { data: adminRow } = await sb.from('admins').select('id').eq('id', data.session.user.id).maybeSingle();
+  if (adminRow) window.location.href = 'admin.html';
+});
+</script>
+</body>
+</html>
