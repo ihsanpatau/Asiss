@@ -137,6 +137,7 @@ tbody tr:hover td{background:var(--gray-50);}
     <button class="sidebar-link" onclick="showPage('transaksi',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Transaksi <span class="badge" id="navTxCount" style="background:var(--yellow);color:#fff;">–</span></button>
     <div class="nav-section-label">Konten &amp; Harga</div>
     <button class="sidebar-link" onclick="showPage('paket',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Paket &amp; Harga</button>
+    <button class="sidebar-link" onclick="showPage('promo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Promo <span class="badge" id="navPromoBadge" style="background:var(--green);color:#fff;">–</span></button>
     <button class="sidebar-link" onclick="showPage('notifikasi',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Info &amp; Notifikasi</button>
     <button class="sidebar-link" onclick="showPage('kuota',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saldo &amp; Kuota API</button>
     <div class="nav-section-label">Sistem</div>
@@ -213,6 +214,48 @@ tbody tr:hover td{background:var(--gray-50);}
         </p>
       </div>
       <div id="packagesList"><div class="empty-state">Memuat paket…</div></div>
+    </div>
+
+    <!-- PROMO -->
+    <div class="page" id="page-promo">
+      <div class="form-card">
+        <div class="form-card-title">Cara Kerja Promo</div>
+        <p style="font-size:12.5px;color:var(--gray-500);line-height:1.6;">
+          Saat <b>Aktif</b> dinyalakan, SEMUA pengguna (apapun paketnya, termasuk Gratis) langsung memakai limit promo ini,
+          menggantikan sementara limit paket biasa mereka. Promo otomatis berhenti berlaku setelah <b>Durasi Promo</b> hari
+          sejak tombol Aktif dinyalakan — tidak perlu dimatikan manual, tapi Anda tetap bisa mematikannya lebih cepat kapan saja.
+        </p>
+      </div>
+      <div class="form-card">
+        <div class="pkg-head" style="margin-bottom:14px;">
+          <b>Pengaturan Promo</b>
+          <label style="margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="promoActive"> Aktif
+          </label>
+        </div>
+        <div class="form-group"><label class="form-label">Nama / Label Promo</label><input type="text" class="form-input" id="promoLabel" placeholder="Mis. Promo 17 Agustus — Unlimited 1 Hari"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Durasi Promo (Hari)</label><input type="number" class="form-input" id="promoDurasi" value="1" placeholder="1"></div>
+          <div class="form-group" id="promoStatusWrap"><label class="form-label">Status Saat Ini</label><div class="form-input" id="promoStatusText" style="background:var(--gray-50,#F9FAFB);display:flex;align-items:center;">Belum pernah diaktifkan</div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Jatah Halaman / Hari (saat promo)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" class="form-input" id="promoHalaman" value="0" placeholder="0" style="flex:1;">
+              <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;"><input type="checkbox" id="promoHalamanUnlimited" checked> Unlimited</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jatah Pesan DoktrAI / Hari (saat promo)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" class="form-input" id="promoPesan" value="0" placeholder="0" style="flex:1;">
+              <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;"><input type="checkbox" id="promoPesanUnlimited" checked> Unlimited</label>
+            </div>
+          </div>
+        </div>
+        <button class="topbar-btn primary" onclick="savePromo()">Simpan Promo</button>
+      </div>
     </div>
 
     <!-- NOTIFIKASI -->
@@ -319,7 +362,7 @@ function showPage(id, btn) {
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.getElementById('page-' + id)?.classList.add('active');
   if (btn) btn.classList.add('active');
-  const titles = { dashboard: 'Dashboard', users: 'Manajemen Pengguna', transaksi: 'Transaksi & Pembayaran', paket: 'Paket & Harga', notifikasi: 'Info & Pemberitahuan', kuota: 'Saldo & Kuota API', pengaturan: 'Pengaturan Sistem', logs: 'Log Aktivitas' };
+  const titles = { dashboard: 'Dashboard', users: 'Manajemen Pengguna', transaksi: 'Transaksi & Pembayaran', paket: 'Paket & Harga', promo: 'Promo', notifikasi: 'Info & Pemberitahuan', kuota: 'Saldo & Kuota API', pengaturan: 'Pengaturan Sistem', logs: 'Log Aktivitas' };
   document.getElementById('pageTitle').textContent = titles[id] || id;
   window.scrollTo(0, 0);
   document.getElementById('sidebar').classList.remove('open');
@@ -345,7 +388,7 @@ function handleLogout() { if (confirm('Keluar dari admin panel?')) { sb.auth.sig
 
 // ===== LOAD ALL =====
 async function loadAll() {
-  await Promise.all([loadDashboard(), loadUsers(), loadPackages(), loadTransactions(), loadNotifications(), loadKuota(), loadSettings(), loadLogs()]);
+  await Promise.all([loadDashboard(), loadUsers(), loadPackages(), loadPromo(), loadTransactions(), loadNotifications(), loadKuota(), loadSettings(), loadLogs()]);
 }
 
 // ===== DASHBOARD =====
@@ -370,7 +413,7 @@ async function loadDashboard() {
 
   const { data: recentTx } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(6);
   document.getElementById('dashTxBody').innerHTML = (recentTx || []).map(t =>
-    `<tr><td>${t.user_email || '-'}</td><td>${planBadge(t.package_key)}</td><td>${fmtIDR(t.amount)}</td><td><span class="badge ${t.status === 'success' ? 'active' : t.status === 'failed' ? 'inactive' : 'pending'}">${t.status}</span></td><td>${fmtDate(t.created_at)}</td></tr>`
+    `<tr><td>${t.user_email || '-'}</td><td>${planBadge(t.package_type)}</td><td>${fmtIDR(t.amount)}</td><td><span class="badge ${t.status === 'success' ? 'active' : t.status === 'failed' ? 'inactive' : 'pending'}">${t.status}</span></td><td>${fmtDate(t.created_at)}</td></tr>`
   ).join('') || '<tr><td colspan="5" class="empty-state">Belum ada transaksi</td></tr>';
 
   const { data: budget } = await sb.from('api_budget').select('topup_amount_usd');
@@ -457,17 +500,34 @@ async function loadTransactions() {
   document.getElementById('navTxCount').textContent = list.filter(t => t.status === 'pending').length;
   document.getElementById('txBody').innerHTML = list.map(t => `
     <tr>
-      <td>${t.user_email || '-'}</td><td>${planBadge(t.package_key)}</td><td>${fmtIDR(t.amount)}</td>
+      <td>${t.user_email || '-'}</td><td>${planBadge(t.package_type)}</td><td>${fmtIDR(t.amount)}</td>
       <td><span class="badge ${t.status === 'success' ? 'active' : t.status === 'failed' ? 'inactive' : 'pending'}">${t.status}</span></td>
       <td>${fmtDate(t.created_at)}</td>
       <td>${t.status === 'pending' ? `<button class="action-btn success" onclick="confirmTx('${t.id}','${t.user_email}')">Konfirmasi</button>` : '-'}</td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty-state">Belum ada transaksi</td></tr>';
 }
 async function confirmTx(id, email) {
+  const { data: trx, error: trxErr } = await sb.from('transactions').select('*').eq('id', id).maybeSingle();
+  if (trxErr || !trx) { showToast('Transaksi tidak ditemukan'); return; }
+
   const { error } = await sb.from('transactions').update({ status: 'success' }).eq('id', id);
   if (error) { showToast('Gagal: ' + error.message); return; }
-  await logAdminChange('konfirmasi_transaksi', email, 'Transaksi ' + id + ' dikonfirmasi manual');
-  showToast('Transaksi dikonfirmasi ✓');
+
+  // Aktifkan paket user juga — pakai Masa Aktif Paket yang sudah diatur di menu Paket & Harga.
+  const { data: pkg } = await sb.from('packages').select('durasi_hari').eq('key', trx.package_type).maybeSingle();
+  const durasiHari = (pkg && Number(pkg.durasi_hari) > 0) ? Number(pkg.durasi_hari) : 30;
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + durasiHari);
+
+  const { error: profErr } = await sb.from('profiles').update({
+    plan: trx.package_type,
+    plan_expiry: expiry.toISOString(),
+    updated_at: new Date().toISOString()
+  }).eq('id', trx.user_id);
+  if (profErr) { showToast('Transaksi dikonfirmasi, tapi gagal aktifkan paket: ' + profErr.message); loadTransactions(); loadDashboard(); return; }
+
+  await logAdminChange('konfirmasi_transaksi', email, 'Transaksi ' + id + ' dikonfirmasi manual, paket ' + trx.package_type + ' aktif ' + durasiHari + ' hari');
+  showToast('Transaksi dikonfirmasi ✓ — paket ' + trx.package_type + ' aktif ' + durasiHari + ' hari');
   loadTransactions(); loadDashboard();
 }
 
@@ -492,6 +552,11 @@ async function loadPackages() {
         <div class="form-group"><label class="form-label">Jatah Pesan DoktrAI / Hari</label><input type="number" class="form-input" id="pesan_${p.key}" value="${p.pesan_limit}"></div>
         <div class="form-group"><label class="form-label">Kata per Halaman</label><input type="number" class="form-input" id="kata_${p.key}" value="${p.words_per_page}"></div>
       </div>
+      <div class="form-row3">
+        <div class="form-group"><label class="form-label">Masa Aktif Paket (Hari)</label><input type="number" class="form-input" id="durasi_${p.key}" value="${p.durasi_hari ?? 30}" placeholder="30"></div>
+        <div class="form-group"><label class="form-label">Interval Reset Pesan DoktrAI (Hari)</label><input type="number" class="form-input" id="pesaninterval_${p.key}" value="${p.pesan_interval_hari ?? 1}" placeholder="1"></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--gray-500);margin:-6px 0 10px;">Masa aktif dihitung dari saat pembayaran berhasil, setelah habis akun otomatis turun ke paket Gratis. Interval reset pesan mengatur seberapa sering jatah pesan DoktrAI diisi ulang — isi <b>1</b> untuk reset tiap hari, <b>7</b> untuk reset tiap minggu, <b>3</b> untuk tiap 3 hari, dst.</p>
       <button class="topbar-btn primary" onclick="savePackage('${p.key}')">Simpan Paket ${p.label}</button>
     </div>`).join('');
 }
@@ -503,6 +568,8 @@ async function savePackage(key) {
     halaman_limit: Number(document.getElementById('hal_' + key).value || 0),
     pesan_limit: Number(document.getElementById('pesan_' + key).value || 0),
     words_per_page: Number(document.getElementById('kata_' + key).value || 450),
+    durasi_hari: Number(document.getElementById('durasi_' + key).value || 30),
+    pesan_interval_hari: Number(document.getElementById('pesaninterval_' + key).value || 1),
     active: document.getElementById('active_' + key).checked,
     updated_at: new Date().toISOString()
   };
@@ -512,6 +579,78 @@ async function savePackage(key) {
   showToast('Paket ' + key + ' disimpan ✓ — langsung berlaku di website konsumen');
   loadPackages();
 }
+
+// ===== PROMO =====
+async function loadPromo() {
+  const { data, error } = await sb.from('promo_settings').select('*').eq('id', 1).maybeSingle();
+  if (error || !data) {
+    document.getElementById('navPromoBadge').textContent = 'OFF';
+    document.getElementById('navPromoBadge').style.background = '#9CA3AF';
+    return;
+  }
+  document.getElementById('promoActive').checked = !!data.active;
+  document.getElementById('promoLabel').value = data.label || '';
+  document.getElementById('promoDurasi').value = data.durasi_hari || 1;
+  document.getElementById('promoHalaman').value = data.halaman_limit || 0;
+  document.getElementById('promoHalamanUnlimited').checked = data.halaman_unlimited !== false;
+  document.getElementById('promoPesan').value = data.pesan_limit || 0;
+  document.getElementById('promoPesanUnlimited').checked = data.pesan_unlimited !== false;
+
+  const badge = document.getElementById('navPromoBadge');
+  const statusText = document.getElementById('promoStatusText');
+  if (data.active && data.started_at) {
+    const start = new Date(data.started_at).getTime();
+    const end = start + (Number(data.durasi_hari) || 1) * 86400000;
+    const msLeft = end - Date.now();
+    if (msLeft > 0) {
+      const jamLeft = Math.floor(msLeft / 3600000);
+      badge.textContent = 'AKTIF';
+      badge.style.background = 'var(--green)';
+      statusText.textContent = `Aktif — sisa ±${jamLeft} jam lagi (berakhir ${new Date(end).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})})`;
+    } else {
+      badge.textContent = 'HABIS';
+      badge.style.background = 'var(--yellow)';
+      statusText.textContent = `Durasi sudah lewat (berakhir ${new Date(end).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}). Nyalakan ulang toggle Aktif untuk mulai sesi promo baru.`;
+    }
+  } else {
+    badge.textContent = 'OFF';
+    badge.style.background = '#9CA3AF';
+    statusText.textContent = data.started_at ? `Nonaktif — terakhir aktif ${new Date(data.started_at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}` : 'Belum pernah diaktifkan';
+  }
+}
+
+async function savePromo() {
+  const activeNow = document.getElementById('promoActive').checked;
+  const { data: prev } = await sb.from('promo_settings').select('active,started_at').eq('id', 1).maybeSingle();
+  const wasActive = !!(prev && prev.active);
+
+  const payload = {
+    active: activeNow,
+    label: document.getElementById('promoLabel').value.trim() || 'Promo',
+    durasi_hari: Number(document.getElementById('promoDurasi').value || 1),
+    halaman_unlimited: document.getElementById('promoHalamanUnlimited').checked,
+    halaman_limit: Number(document.getElementById('promoHalaman').value || 0),
+    pesan_unlimited: document.getElementById('promoPesanUnlimited').checked,
+    pesan_limit: Number(document.getElementById('promoPesan').value || 0),
+    updated_at: new Date().toISOString()
+  };
+  // Kalau promo baru saja dinyalakan (sebelumnya OFF, sekarang ON), catat waktu mulai
+  // supaya jendela durasi dihitung dari sini. Kalau sudah aktif sebelumnya dan cuma
+  // ubah angka, waktu mulai TIDAK direset (biar tidak curang memperpanjang promo).
+  if (activeNow && !wasActive) {
+    payload.started_at = new Date().toISOString();
+  }
+  if (!activeNow) {
+    // dimatikan manual — biarkan started_at apa adanya untuk histori, active=false sudah cukup
+  }
+
+  const { error } = await sb.from('promo_settings').upsert({ id: 1, ...payload });
+  if (error) { showToast('Gagal: ' + error.message); return; }
+  await logAdminChange('ubah_promo', null, JSON.stringify(payload));
+  showToast('Promo disimpan ✓ — langsung berlaku di website konsumen');
+  loadPromo();
+}
+
 
 // ===== NOTIFICATIONS =====
 async function sendNotification() {
