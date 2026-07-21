@@ -506,10 +506,28 @@ async function toggleBlock(id, email, isBlocked) {
   loadUsers();
 }
 async function changePlanFree(id, email, newPlan) {
-  const { error } = await sb.from('profiles').update({ plan: newPlan, updated_at: new Date().toISOString() }).eq('id', id);
+  // Samakan dengan alur pembelian: paket berbayar dapat plan_expiry dihitung
+  // dari HARI INI + Masa Aktif Paket (durasi_hari) yang berlaku SEKARANG di
+  // menu Paket & Harga. Paket 'gratis' tidak punya masa aktif, jadi expiry
+  // dikosongkan supaya tidak nyangkut tanggal lama.
+  let profileUpdate = { plan: newPlan, updated_at: new Date().toISOString() };
+  let durasiInfo = '';
+
+  if (newPlan === 'gratis') {
+    profileUpdate.plan_expiry = null;
+  } else {
+    const { data: pkg } = await sb.from('packages').select('durasi_hari').eq('key', newPlan).maybeSingle();
+    const durasiHari = (pkg && Number(pkg.durasi_hari) > 0) ? Number(pkg.durasi_hari) : 30;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + durasiHari);
+    profileUpdate.plan_expiry = expiry.toISOString();
+    durasiInfo = ' (aktif ' + durasiHari + ' hari, s.d. ' + expiry.toLocaleDateString('id-ID') + ')';
+  }
+
+  const { error } = await sb.from('profiles').update(profileUpdate).eq('id', id);
   if (error) { showToast('Gagal: ' + error.message); return; }
-  await logAdminChange('ubah_paket_manual', email, 'Diubah ke paket ' + newPlan + ' oleh admin (gratis, tanpa bayar)');
-  showToast('Paket ' + email + ' diubah ke ' + newPlan + ' ✓');
+  await logAdminChange('ubah_paket_manual', email, 'Diubah ke paket ' + newPlan + ' oleh admin (gratis, tanpa bayar)' + durasiInfo);
+  showToast('Paket ' + email + ' diubah ke ' + newPlan + durasiInfo + ' ✓');
   loadUsers(); loadDashboard();
 }
 
